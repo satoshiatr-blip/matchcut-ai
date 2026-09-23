@@ -202,6 +202,18 @@ function drawSlowFx(ctx: Ctx, scene: Scene, src: number, frame: number) {
   ctx.restore()
 }
 
+function spacedWidth(ctx: Ctx, text: string, gap: number) {
+  let w = 0
+  for (const ch of text) w += ctx.measureText(ch).width + gap
+  return w - gap
+}
+
+// #rrggbb を rgba() に変換する（カラーピッカーの色をグラデーション等で半透明にするため）
+function withAlpha(hex: string, alpha: number) {
+  const n = parseInt(hex.replace('#', ''), 16)
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`
+}
+
 function spaced(ctx: Ctx, text: string, x: number, y: number, gap: number) {
   for (const ch of text) {
     ctx.fillText(ch, x, y)
@@ -362,84 +374,101 @@ function slanted(ctx: Ctx, x: number, y: number, w: number, h: number, s: number
   ctx.fill()
 }
 
-function glitchText(ctx: Ctx, text: string, x: number, y: number, split: number, accent: string) {
-  ctx.save()
-  ctx.globalCompositeOperation = 'lighter'
-  ctx.fillStyle = 'rgba(255,0,90,0.65)'
-  ctx.fillText(text, x + split, y)
-  ctx.fillStyle = 'rgba(0,200,255,0.75)'
-  ctx.fillText(text, x - split, y)
-  ctx.restore()
-  ctx.save()
-  ctx.shadowColor = accent
-  ctx.shadowBlur = 30
-  ctx.fillStyle = '#fff'
-  ctx.fillText(text, x, y)
-  ctx.restore()
-}
-
 export function drawCard(ctx: Ctx, p: Project, kind: 'open' | 'close', t: number, dur: number) {
   const accent = p.color
   const frame = Math.round(t * FPS)
-  ctx.fillStyle = INK
+  const cx = OUT_W / 2
+  const cy = OUT_H / 2
+
+  // 背景：静かなグラデーションと控えめな光だけ。集中線や幽霊文字は使わない
+  const bg = ctx.createLinearGradient(0, 0, OUT_W, OUT_H)
+  bg.addColorStop(0, '#05070f')
+  bg.addColorStop(1, '#0b1226')
+  ctx.fillStyle = bg
   ctx.fillRect(0, 0, OUT_W, OUT_H)
-  const glow = ctx.createRadialGradient(OUT_W / 2, OUT_H / 2, 0, OUT_W / 2, OUT_H / 2, OUT_W * 0.6)
-  glow.addColorStop(0, 'rgba(30,110,255,0.55)')
+  const glow = ctx.createRadialGradient(cx, OUT_H * 0.4, 0, cx, OUT_H * 0.4, OUT_W * 0.55)
+  glow.addColorStop(0, withAlpha(accent, 0.22))
   glow.addColorStop(1, 'rgba(0,0,0,0)')
   ctx.fillStyle = glow
   ctx.fillRect(0, 0, OUT_W, OUT_H)
-  speedLines(ctx, OUT_W / 2, OUT_H / 2, frame, 70, 380, accent, 0.5)
+  drawVignette(ctx, 0.55)
 
-  ctx.save()
-  ctx.translate(OUT_W / 2, OUT_H / 2)
-  ctx.rotate(-0.12)
-  ctx.font = `italic 900 330px ${FONT}`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.globalAlpha = 0.1
-  ctx.lineWidth = 3
-  ctx.strokeStyle = CYAN
-  ctx.strokeText(kind === 'open' ? 'HIGHLIGHTS' : 'NEXT STAGE', 60 - t * 40, 20)
-  ctx.restore()
+  const reveal = ease(clamp(t / 0.5, 0, 1))
+  const rise = (1 - reveal) * 18
 
-  const k = ease(clamp((t - 0.15) / 0.25, 0, 1))
-  const split = 22 * (1 - k) + (rnd(frame) < 0.15 ? 14 : 2)
+  // ケッカー：字間を空けた小さな英字ラベル＋細い一本線
+  const kicker = kind === 'open' ? 'MATCH HIGHLIGHTS' : 'THANK YOU'
   ctx.save()
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.globalAlpha = k
+  ctx.globalAlpha = reveal
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+  ctx.font = `700 25px ${FONT}`
   ctx.fillStyle = CYAN
-  ctx.font = `italic 800 38px ${FONT}`
-  const top = kind === 'open' ? 'MATCH  HIGHLIGHTS' : 'TO  BE  CONTINUED'
-  ctx.fillText(top.split('').join(' '), OUT_W / 2, OUT_H / 2 - 190)
-
-  ctx.save()
-  ctx.translate(OUT_W / 2, OUT_H / 2 - 40)
-  ctx.scale(1.35 - 0.35 * k, 1.35 - 0.35 * k)
-  ctx.transform(1, 0, -0.18, 1, 0, 0)
-  const main = kind === 'open' ? (p.title || 'HIGHLIGHTS') : (p.team || 'HIGHLIGHTS')
-  ctx.font = `italic 900 ${main.length > 10 ? 110 : 140}px ${FONT}`
-  glitchText(ctx, main, 0, 0, split, accent)
+  const kickerY = cy - 218 + rise
+  const kw = spacedWidth(ctx, kicker, 9)
+  spaced(ctx, kicker, cx - kw / 2, kickerY, 9)
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(cx - 54, kickerY + 26)
+  ctx.lineTo(cx + 54, kickerY + 26)
+  ctx.stroke()
   ctx.restore()
 
-  const sub = kind === 'open' ? [p.team, p.opponent].filter(Boolean).join('   VS   ') : ''
-  const k2 = ease(clamp((t - 0.5) / 0.3, 0, 1))
+  // メインタイトル：グリッチや傾きをやめ、静かにスケール＋フェードで見せる
+  const main = kind === 'open' ? (p.title || 'HIGHLIGHTS') : (p.team || 'HIGHLIGHTS')
+  const titleK = ease(clamp((t - 0.12) / 0.45, 0, 1))
+  ctx.save()
+  ctx.globalAlpha = titleK
+  ctx.translate(cx, cy - 38 + (1 - titleK) * 14)
+  ctx.scale(0.97 + 0.03 * titleK, 0.97 + 0.03 * titleK)
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `800 ${main.length > 10 ? 88 : 116}px ${FONT}`
+  ctx.shadowColor = accent
+  ctx.shadowBlur = 34
+  ctx.fillStyle = '#fff'
+  ctx.fillText(main, 0, 0)
+  ctx.shadowBlur = 0
+  ctx.restore()
+
+  // タイトル下の細いアンダーライン（アクセントカラーのグラデーション）
+  ctx.save()
+  ctx.globalAlpha = titleK
+  const lineW = 130 * titleK
+  const ug = ctx.createLinearGradient(cx - lineW, 0, cx + lineW, 0)
+  ug.addColorStop(0, 'rgba(255,255,255,0)')
+  ug.addColorStop(0.5, accent)
+  ug.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = ug
+  ctx.fillRect(cx - lineW, cy + 26, lineW * 2, 3)
+  ctx.restore()
+
+  // サブ：チーム・対戦相手、控えめな一行
+  const subK = ease(clamp((t - 0.32) / 0.35, 0, 1))
+  const sub = kind === 'open' ? [p.team, p.opponent].filter(Boolean).join('   ·   ') : ''
   if (sub) {
-    ctx.font = `italic 900 52px ${FONT}`
-    const sw = ctx.measureText(sub).width + 120
-    ctx.globalAlpha = k2
-    ctx.fillStyle = '#fff'
-    slanted(ctx, OUT_W / 2 - sw / 2 + (1 - k2) * 200, OUT_H / 2 + 80, sw, 80, 20)
-    ctx.fillStyle = INK
-    ctx.fillText(sub, OUT_W / 2 + (1 - k2) * 200, OUT_H / 2 + 122)
+    ctx.save()
+    ctx.globalAlpha = subK
+    ctx.textAlign = 'center'
+    ctx.font = `600 33px ${FONT}`
+    ctx.fillStyle = 'rgba(255,255,255,0.82)'
+    ctx.fillText(sub, cx, cy + 76)
+    ctx.restore()
   }
   if (p.date) {
-    ctx.globalAlpha = k2 * 0.85
-    ctx.fillStyle = '#fff'
-    ctx.font = `600 34px ${FONT}`
-    ctx.fillText(p.date.replaceAll('-', '.'), OUT_W / 2, OUT_H / 2 + (sub ? 220 : 110))
+    ctx.save()
+    ctx.globalAlpha = subK * 0.75
+    ctx.textAlign = 'center'
+    ctx.font = `500 24px ${FONT}`
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'
+    const dy = sub ? cy + 118 : cy + 76
+    const dtext = p.date.replaceAll('-', '.')
+    const dw = spacedWidth(ctx, dtext, 4)
+    ctx.textAlign = 'left'
+    spaced(ctx, dtext, cx - dw / 2, dy, 4)
+    ctx.restore()
   }
-  ctx.restore()
 
   drawGrain(ctx, frame)
   if (t < 0.08) {
