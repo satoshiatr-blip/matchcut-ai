@@ -143,7 +143,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
 
   return (
     <div className="space-y-4">
-      <ScreenTitle step="02" en="MARK" title="見せ場をマーク" sub={`決定的な瞬間でタップ。前${PRE_SEC}秒・後${POST_SEC}秒がシーンになります`} />
+      <ScreenTitle step="02" en="MARK" title="見せ場をマーク" sub={`前${PRE_SEC}秒・後${POST_SEC}秒がシーンになります`} />
 
       {missing.length > 0 && (
         <Card className="!border-amber-400/50 !bg-amber-400/10 space-y-3">
@@ -173,7 +173,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
       </div>
 
       {/* AI候補：歓声の音量から見返す場所を提案する（自動でシーンにはしない） */}
-      <Card className="!border-cyan/30 space-y-3">
+      <Card className="!border-cyan/30 !p-3 space-y-2">
         {analyzing ? (
           <>
             <div className="flex items-center justify-between text-sm">
@@ -190,12 +190,11 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
               <span className="flex items-center gap-1.5 text-sm font-bold text-cyan"><IconWave />AI候補</span>
               <span className="text-xs text-muted tabular-nums">残り{candidates.length}件・{fmt(reviewTime)}</span>
             </div>
-            <p className="text-xs text-muted">歓声が大きくなった場所です。見せ場ならゴール等をタップ、違えば「この候補を消す」へ</p>
-            <div className="grid grid-cols-2 gap-2">
-              <Button className="text-sm" onClick={() => stepReview(-1)} disabled={candidates.length < 2}><IconRewind />前の候補</Button>
-              <Button className="text-sm" onClick={() => stepReview(1)} disabled={candidates.length < 2}>次の候補<IconForward /></Button>
-              <Button className="text-sm" onClick={resolveCandidate}><IconSkip />この候補を消す</Button>
-              <Button className="text-sm" onClick={() => setReviewTime(null)}>あとで見る</Button>
+            <div className="grid grid-cols-2 gap-1.5">
+              <Button className="text-sm !min-h-10" onClick={() => stepReview(-1)} disabled={candidates.length < 2}><IconRewind />前の候補</Button>
+              <Button className="text-sm !min-h-10" onClick={() => stepReview(1)} disabled={candidates.length < 2}>次の候補<IconForward /></Button>
+              <Button className="text-sm !min-h-10" onClick={resolveCandidate}><IconSkip />この候補を消す</Button>
+              <Button className="text-sm !min-h-10" onClick={() => setReviewTime(null)}>あとで見る</Button>
             </div>
           </>
         ) : candidates.length > 0 ? (
@@ -213,6 +212,20 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
           </div>
         )}
       </Card>
+
+      {/* 動画の切り替え（AI候補の前後）と採用ボタンをここにまとめ、スクロールなしで押せるようにする */}
+      <div className="grid grid-cols-3 gap-2.5">
+        {(['goal', 'save', 'play'] as SceneKind[]).map(k => {
+          const { Icon, btn } = KIND_UI[k]
+          return (
+            <button key={k} disabled={!url} onClick={() => mark(k)}
+              className={`flex flex-col items-center justify-center gap-1 h-20 rounded-2xl font-black italic text-base transition active:scale-95 disabled:opacity-35 ${btn}`}>
+              <Icon className="text-2xl" />
+              {KIND_JA[k]}
+            </button>
+          )
+        })}
+      </div>
 
       <div>
         <div className="relative h-10 rounded-xl bg-surface border border-line overflow-hidden">
@@ -238,19 +251,6 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
         <Button className="!px-0 text-sm !bg-fg !text-ink" onClick={() => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])}>×{speed}</Button>
         <Button className="!px-0 text-sm" onClick={() => seek(3)} aria-label="3秒進む">3<IconForward /></Button>
         <Button className="!px-0 text-sm" onClick={() => seek(10)} aria-label="10秒進む">10<IconForward /></Button>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3 pt-1">
-        {(['goal', 'save', 'play'] as SceneKind[]).map(k => {
-          const { Icon, btn } = KIND_UI[k]
-          return (
-            <button key={k} disabled={!url} onClick={() => mark(k)}
-              className={`flex flex-col items-center justify-center gap-1.5 h-24 rounded-2xl font-black italic text-lg transition active:scale-95 disabled:opacity-35 ${btn}`}>
-              <Icon className="text-3xl" />
-              {KIND_JA[k]}
-            </button>
-          )
-        })}
       </div>
 
       {project.scenes.length > 0 && (
