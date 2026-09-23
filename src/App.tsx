@@ -6,15 +6,17 @@ import SetupTab from './components/SetupTab'
 import MarkTab from './components/MarkTab'
 import ScenesTab from './components/ScenesTab'
 import ExportTab from './components/ExportTab'
-import { IconExport, IconFlag, IconLayers, IconTarget } from './components/icons'
+import ReflectionTab from './components/ReflectionTab'
+import { IconExport, IconFlag, IconLayers, IconNotebook, IconTarget } from './components/icons'
 import { Logo, Wordmark } from './components/brand'
 
-export type Tab = 'setup' | 'mark' | 'scenes' | 'export'
+export type Tab = 'setup' | 'mark' | 'scenes' | 'export' | 'reflect'
 const TABS = [
   { id: 'setup', label: '試合', Icon: IconFlag },
   { id: 'mark', label: 'マーク', Icon: IconTarget },
   { id: 'scenes', label: 'シーン', Icon: IconLayers },
   { id: 'export', label: '書き出し', Icon: IconExport },
+  { id: 'reflect', label: '振り返り', Icon: IconNotebook },
 ] as const
 
 function readDuration(f: File) {
@@ -71,22 +73,23 @@ export default function App() {
         {tab === 'mark' && <MarkTab project={project} setProject={setProject} files={files} addFiles={addFiles} removeSource={removeSource} go={go} />}
         {tab === 'scenes' && <ScenesTab project={project} setProject={setProject} files={files} go={go} />}
         {tab === 'export' && <ExportTab project={project} setProject={setProject} files={files} addFiles={addFiles} />}
+        {tab === 'reflect' && <ReflectionTab project={project} setProject={setProject} files={files} />}
       </main>
 
       <nav className="fixed bottom-0 inset-x-0 z-30 bg-surface/90 backdrop-blur-xl border-t border-line pb-[env(safe-area-inset-bottom)]">
-        <div className="max-w-2xl mx-auto grid grid-cols-4">
+        <div className="max-w-2xl mx-auto grid grid-cols-5">
           {TABS.map(({ id, label, Icon }, i) => {
             const active = tab === id
             return (
               <button key={id} onClick={() => go(id)} className={`relative flex flex-col items-center gap-1 pt-2.5 pb-2 transition ${active ? 'text-cyan' : 'text-muted'}`}>
                 {active && <span className="absolute top-0 h-0.5 w-10 rounded-full bg-cyan shadow-[0_0_10px_#3ee0ff]" />}
-                <span className="relative text-2xl">
+                <span className="relative text-xl">
                   <Icon />
                   {id === 'scenes' && project.scenes.length > 0 && (
                     <span className="absolute -top-1.5 -right-3 min-w-5 h-5 px-1 rounded-full bg-brand text-white text-[11px] font-bold grid place-items-center">{project.scenes.length}</span>
                   )}
                 </span>
-                <span className="text-[11px] font-bold"><span className="opacity-50 mr-0.5">0{i + 1}</span>{label}</span>
+                <span className="text-[10px] font-bold"><span className="opacity-50 mr-0.5">0{i + 1}</span>{label}</span>
               </button>
             )
           })}

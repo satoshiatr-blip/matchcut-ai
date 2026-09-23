@@ -30,3 +30,5 @@ export const IconSaveVideo = base(<><path d="M12 4v10" /><path d="m8 10 4 4 4-4"
 export const IconWave = base(<><path d="M3 12h2l2-7 3 14 3-11 2 7 3-5 3 2" /></>)
 export const IconEyeOff = base(<><path d="M2 12s3.5-7 10-7c2 0 3.7.6 5.1 1.5M22 12s-3.5 7-10 7c-2 0-3.7-.6-5.1-1.5" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /><path d="M3 3l18 18" /></>)
 export const IconSkip = base(<><path d="m5 5 8 7-8 7V5Z" fill="currentColor" /><path d="M19 5v14" /></>)
+export const IconNotebook = base(<><path d="M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M4 7h3M4 12h3M4 17h3" /></>)
+export const IconTrendUp = base(<><path d="m3 17 6-6 4 4 8-8" /><path d="M15 7h6v6" /></>)
