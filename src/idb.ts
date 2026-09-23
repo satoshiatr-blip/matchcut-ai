@@ -1,4 +1,5 @@
-// 小さなデータ（BGMファイル・チーム名簿）を IndexedDB に置く。試合動画は大きすぎるので保存しない
+// 小さなデータ（BGMファイル・チーム名簿）に加え、試合動画そのものも IndexedDB に置く。
+// アプリを開き直しても動画を選び直さなくて済むが、その分iPhoneの容量を使う点に注意
 const DB = 'matchcut-ai'
 const STORE = 'files'
 
@@ -11,25 +12,38 @@ function open() {
   })
 }
 
-export async function idbGet<T>(key: string): Promise<T | null> {
+// 接続を開けっぱなしにしない（溜まるとDBの削除・再オープンが詰まる）。使い終わったら必ず閉じる
+async function withStore<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequest<T>): Promise<T | null> {
+  let db: IDBDatabase | null = null
   try {
-    const db = await open()
-    return await new Promise(resolve => {
-      const q = db.transaction(STORE).objectStore(STORE).get(key)
-      q.onsuccess = () => resolve(q.result ?? null)
-      q.onerror = () => resolve(null)
+    db = await open()
+    return await new Promise<T | null>(resolve => {
+      const tx = db!.transaction(STORE, mode)
+      const req = fn(tx.objectStore(STORE))
+      req.onsuccess = () => resolve(req.result ?? null)
+      req.onerror = () => resolve(null)
     })
-  } catch { return null }
+  } catch {
+    return null
+  } finally {
+    db?.close()
+  }
+}
+
+export async function idbGet<T>(key: string): Promise<T | null> {
+  return withStore<T>('readonly', store => store.get(key))
 }
 
 export async function idbSet(key: string, value: unknown) {
-  try {
-    const db = await open()
-    const tx = db.transaction(STORE, 'readwrite')
-    if (value == null) tx.objectStore(STORE).delete(key)
-    else tx.objectStore(STORE).put(value, key)
-  } catch { /* 保存できなくても今の操作は続けられる */ }
+  if (value == null) await withStore('readwrite', store => store.delete(key))
+  else await withStore('readwrite', store => store.put(value, key))
 }
 
 export const loadBgm = () => idbGet<File>('bgm')
 export const saveBgm = (f: File | null) => idbSet('bgm', f)
+
+// 試合動画。key は sourceKey（ファイル名+サイズ）と揃える
+const videoKey = (key: string) => `video:${key}`
+export const loadSourceVideo = (key: string) => idbGet<File>(videoKey(key))
+export const saveSourceVideo = (key: string, f: File) => idbSet(videoKey(key), f)
+export const deleteSourceVideo = (key: string) => idbSet(videoKey(key), null)

@@ -15,6 +15,7 @@ type Props = ProjectProps & {
   addFiles: (f: FileList) => void
   removeSource: (key: string) => void
   go: (t: Tab) => void
+  restoring: boolean
 }
 
 const SPEEDS = [1, 2, 4]
@@ -24,7 +25,7 @@ export const KIND_UI: Record<SceneKind, { Icon: ComponentType<SVGProps<SVGSVGEle
   play: { Icon: IconSpark, btn: 'bg-fg text-ink', dot: 'bg-fg' },
 }
 
-export default function MarkTab({ project, setProject, files, addFiles, removeSource, go }: Props) {
+export default function MarkTab({ project, setProject, files, addFiles, removeSource, go, restoring }: Props) {
   const [activeKey, setActiveKey] = useState(project.sources[0]?.key ?? '')
   const [speed, setSpeed] = useState(1)
   const [time, setTime] = useState(0)
@@ -155,9 +156,15 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
     <div className="space-y-4">
       <ScreenTitle step="02" en="MARK" title="見せ場をマーク" sub={`前${PRE_SEC}秒・後${POST_SEC}秒がシーンになります`} />
 
-      {missing.length > 0 && (
+      {restoring && missing.length > 0 && (
+        <Card className="!border-cyan/30 flex items-center gap-3">
+          <span className="w-5 h-5 rounded-full border-2 border-cyan border-t-transparent animate-spin shrink-0" />
+          <p className="text-sm text-muted">保存していた動画を読み込んでいます…</p>
+        </Card>
+      )}
+      {!restoring && missing.length > 0 && (
         <Card className="!border-amber-400/50 !bg-amber-400/10 space-y-3">
-          <p className="text-sm text-amber-200">アプリを開き直したので、次の動画をもう一度選んでください</p>
+          <p className="text-sm text-amber-200">保存していた動画が見つかりませんでした。次の動画をもう一度選んでください</p>
           <ul className="text-xs text-amber-200/80 list-disc pl-5">{missing.map(m => <li key={m.key}>{m.name}</li>)}</ul>
           <FilePicker onFiles={addFiles} className="w-full min-h-11 rounded-xl bg-amber-400 text-ink">動画を選び直す</FilePicker>
         </Card>

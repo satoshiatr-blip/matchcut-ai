@@ -1,12 +1,11 @@
 import type { Tab } from '../App'
-import { emptyProject } from '../store'
 import { uid } from '../types'
 import { IconPlus, IconTrash, IconUp } from './icons'
 import { Button, Card, Field, GroupLabel, ScreenTitle, inputCls, type ProjectProps } from './ui'
 
 const COLORS = ['#1a73ff', '#3ee0ff', '#ff3b5c', '#22c55e', '#a855f7', '#f97316', '#facc15', '#e5e7eb']
 
-export default function SetupTab({ project, setProject, go }: ProjectProps & { go: (t: Tab) => void }) {
+export default function SetupTab({ project, setProject, go, onStartNewMatch }: ProjectProps & { go: (t: Tab) => void; onStartNewMatch: () => void }) {
   const set = <K extends keyof typeof project>(k: K, v: (typeof project)[K]) => setProject(p => ({ ...p, [k]: v }))
   const updatePlayer = (id: string, patch: { number?: string; name?: string }) =>
     setProject(p => ({ ...p, players: p.players.map(x => x.id === id ? { ...x, ...patch } : x) }))
@@ -82,15 +81,21 @@ export default function SetupTab({ project, setProject, go }: ProjectProps & { g
         </Card>
       </div>
 
+      {project.sources.length > 0 && (
+        <div>
+          <GroupLabel>保存している動画</GroupLabel>
+          <Card className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold">{project.sources.length}本・約{(project.sources.reduce((a, s) => a + s.size, 0) / 1e9).toFixed(1)}GB</p>
+              <p className="text-xs text-muted mt-0.5">アプリを開き直しても選び直さなくて済むよう、端末に保存しています</p>
+            </div>
+          </Card>
+        </div>
+      )}
+
       <Button variant="primary" className="w-full min-h-14 text-lg" onClick={() => go('mark')}>次へ：動画を選ぶ</Button>
 
-      <button className="w-full py-3 text-sm text-danger/80"
-        onClick={() => {
-          if (confirm('試合の情報とシーンをすべて消して、新しい試合を始めますか？（選手とチームは残ります）'))
-            setProject(p => ({ ...emptyProject(), team: p.team, color: p.color, players: p.players }))
-        }}>
-        新しい試合を始める
-      </button>
+      <button className="w-full py-3 text-sm text-danger/80" onClick={onStartNewMatch}>新しい試合を始める</button>
     </div>
   )
 }

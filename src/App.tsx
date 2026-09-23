@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useProject } from './store'
+import { deleteSourceVideo, loadSourceVideo, saveSourceVideo } from './idb'
 import type { SourceMeta } from './types'
 import { sourceKey } from './types'
 import SetupTab from './components/SetupTab'
@@ -32,9 +33,29 @@ function readDuration(f: File) {
 export default function App() {
   const [project, setProject] = useProject()
   const [files, setFiles] = useState<Map<string, File>>(new Map())
+  const [restoring, setRestoring] = useState(true)
   const [tab, setTab] = useState<Tab>(project.sources.length ? 'mark' : 'setup')
 
   const go = (t: Tab) => { setTab(t); window.scrollTo({ top: 0 }) }
+
+  // アプリを開き直したとき、前回選んだ動画をIndexedDBから自動で読み込む
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const need = project.sources.filter(s => !files.has(s.key))
+      if (need.length === 0) { setRestoring(false); return }
+      const found = new Map<string, File>()
+      for (const s of need) {
+        const f = await loadSourceVideo(s.key)
+        if (f) found.set(s.key, f)
+      }
+      if (!cancelled && found.size) setFiles(prev => new Map([...prev, ...found]))
+      if (!cancelled) setRestoring(false)
+    })()
+    return () => { cancelled = true }
+    // 起動時の復元だけでよい
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function addFiles(list: FileList) {
     const next = new Map(files)
@@ -43,6 +64,7 @@ export default function App() {
       const key = sourceKey(f)
       next.set(key, f)
       metas.push({ key, name: f.name, size: f.size, duration: await readDuration(f) })
+      saveSourceVideo(key, f) // 次にアプリを開いたときのために保存しておく（容量を使う）
     }
     setFiles(next)
     setProject(p => {
@@ -52,8 +74,22 @@ export default function App() {
   }
 
   function removeSource(key: string) {
-    if (!confirm('この動画と、その中のシーンを外しますか？')) return
+    if (!confirm('この動画と、その中のシーンを外しますか？保存していた動画データも消えます')) return
+    deleteSourceVideo(key)
     setProject(p => ({ ...p, sources: p.sources.filter(s => s.key !== key), scenes: p.scenes.filter(s => s.sourceKey !== key) }))
+  }
+
+  function startNewMatch() {
+    if (!confirm('試合の情報とシーンをすべて消して、新しい試合を始めますか？（選手とチームは残ります）保存していた動画データも消えます'))
+      return
+    project.sources.forEach(s => deleteSourceVideo(s.key))
+    setFiles(new Map())
+    setProject(p => ({
+      title: '', date: p.date, team: p.team, opponent: '', color: p.color, players: p.players,
+      sources: [], scenes: [], gameVolume: p.gameVolume, bgmVolume: p.bgmVolume, grade: p.grade,
+      sfx: p.sfx, sfxVolume: p.sfxVolume, bgmStart: p.bgmStart, showNames: p.showNames, aiCandidates: {},
+    }))
+    go('setup')
   }
 
   return (
@@ -69,8 +105,8 @@ export default function App() {
       </header>
 
       <main key={tab} className="rise max-w-2xl mx-auto px-5 pt-5 pb-36">
-        {tab === 'setup' && <SetupTab project={project} setProject={setProject} go={go} />}
-        {tab === 'mark' && <MarkTab project={project} setProject={setProject} files={files} addFiles={addFiles} removeSource={removeSource} go={go} />}
+        {tab === 'setup' && <SetupTab project={project} setProject={setProject} go={go} onStartNewMatch={startNewMatch} />}
+        {tab === 'mark' && <MarkTab project={project} setProject={setProject} files={files} addFiles={addFiles} removeSource={removeSource} go={go} restoring={restoring} />}
         {tab === 'scenes' && <ScenesTab project={project} setProject={setProject} files={files} go={go} />}
         {tab === 'export' && <ExportTab project={project} setProject={setProject} files={files} addFiles={addFiles} />}
         {tab === 'reflect' && <ReflectionTab project={project} setProject={setProject} files={files} />}
