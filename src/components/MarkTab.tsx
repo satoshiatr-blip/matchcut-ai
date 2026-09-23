@@ -85,12 +85,13 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
     setSlam({ n: Date.now(), word: { goal: 'GOAL!', save: 'SAVE!', play: 'NICE!' }[kind] })
     setToast(`${KIND_JA[kind]}を追加  ${fmt(v.currentTime)}`)
     setTimeout(() => setToast(''), 1600)
-    if (reviewIndex != null) resolveCandidate()
+    // 採用したら候補からは外すが、動画は動かさずこの場で続きを見られるようにする
+    if (reviewIndex != null) resolveCandidate(false)
   }
 
   // レビュー中の候補を消して、残りの中から次（なければ先頭）へ進む。
   // 削除後は元のreviewIndexの位置に次の候補が繰り上がるので、そのままの番号でよい
-  function resolveCandidate() {
+  function resolveCandidate(seek = true) {
     if (!active || reviewIndex == null) return
     const key = active.key
     const list = project.aiCandidates[key] || []
@@ -99,7 +100,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
     if (remaining.length === 0) { setReviewIndex(null); return }
     const nextIndex = reviewIndex < remaining.length ? reviewIndex : 0
     setReviewIndex(nextIndex)
-    seekToCandidate(remaining[nextIndex])
+    if (seek) seekToCandidate(remaining[nextIndex])
   }
 
   function stepReview(dir: 1 | -1) {
@@ -202,7 +203,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
             <div className="grid grid-cols-2 gap-1.5">
               <Button className="text-sm !min-h-10" onClick={() => stepReview(-1)} disabled={candidates.length < 2}><IconRewind />前の候補</Button>
               <Button className="text-sm !min-h-10" onClick={() => stepReview(1)} disabled={candidates.length < 2}>次の候補<IconForward /></Button>
-              <Button className="text-sm !min-h-10" onClick={resolveCandidate}><IconSkip />この候補を消す</Button>
+              <Button className="text-sm !min-h-10" onClick={() => resolveCandidate()}><IconSkip />この候補を消す</Button>
               <Button className="text-sm !min-h-10" onClick={() => setReviewIndex(null)}>あとで見る</Button>
             </div>
           </>
