@@ -15,8 +15,10 @@ createRoot(document.getElementById('root')!).render(
 navigator.storage?.persist?.().catch(() => {})
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(async () => {
-    const reg = await navigator.serviceWorker.ready
+  // updateViaCache: 'none' で sw.js 自体もブラウザのディスクキャッシュを無視して毎回確かめる
+  navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(async reg => {
+    reg.update().catch(() => {}) // 起動のたびに新しい版が出ていないか確かめる
+    await navigator.serviceWorker.ready
     // オフラインで書き出すときに要る予備AACエンコーダも、オンラインのうちに取得しておく
     await ensureAac().catch(() => {})
     const urls = [new URL('./', location.href).href, ...performance.getEntriesByType('resource').map(e => e.name)]
