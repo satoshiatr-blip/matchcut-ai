@@ -47,11 +47,21 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
   useEffect(() => { if (videoRef.current) videoRef.current.playbackRate = speed }, [speed, url])
   useEffect(() => { setReviewTime(null) }, [activeKey])
 
-  useEffect(() => {
-    if (reviewTime == null) return
+  // 動画の読み込みが済んでいなくても確実に移動できるよう、metadataを待ってから動かす
+  function seekVideo(t: number) {
     const v = videoRef.current
-    if (v) v.currentTime = Math.max(0, reviewTime - 2)
-  }, [reviewTime])
+    if (!v) return
+    const apply = () => { v.currentTime = Math.min(v.duration || t, Math.max(0, t)); v.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) }
+    if (v.readyState >= 1) apply()
+    else v.addEventListener('loadedmetadata', apply, { once: true })
+  }
+
+  // 候補の少し前から確認できるよう2秒手前へ移動する
+  const seekToCandidate = (t: number) => {
+    seekVideo(Math.max(0, t - 2))
+    setToast(`候補へ移動  ${fmt(t)}`)
+    setTimeout(() => setToast(''), 1200)
+  }
 
   const seek = (d: number) => {
     const v = videoRef.current
@@ -77,7 +87,9 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
     const list = project.aiCandidates[key] || []
     const remaining = list.filter(t => t !== reviewTime)
     setProject(p => ({ ...p, aiCandidates: { ...p.aiCandidates, [key]: remaining } }))
-    setReviewTime(remaining.find(t => t > reviewTime) ?? remaining[0] ?? null)
+    const next = remaining.find(t => t > reviewTime) ?? remaining[0] ?? null
+    setReviewTime(next)
+    if (next != null) seekToCandidate(next)
   }
 
   function stepReview(dir: 1 | -1) {
@@ -85,6 +97,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
     const i = candidates.indexOf(reviewTime)
     const next = candidates[(i + dir + candidates.length) % candidates.length]
     setReviewTime(next)
+    seekToCandidate(next)
   }
 
   async function analyze() {
@@ -99,7 +112,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
       input.dispose()
       const times = found.map(c => c.t)
       setProject(p => ({ ...p, aiCandidates: { ...p.aiCandidates, [active.key]: times } }))
-      if (times.length) setReviewTime(times[0])
+      if (times.length) { setReviewTime(times[0]); seekToCandidate(times[0]) }
       else setToast('目立った歓声は見つかりませんでした')
       setTimeout(() => setToast(''), 2000)
     } catch (e) {
@@ -188,7 +201,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
         ) : candidates.length > 0 ? (
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm"><span className="font-bold text-cyan">{candidates.length}件</span> のAI候補が残っています</span>
-            <Button variant="primary" className="shrink-0 text-sm" onClick={() => setReviewTime(candidates[0])}>確認する</Button>
+            <Button variant="primary" className="shrink-0 text-sm" onClick={() => { setReviewTime(candidates[0]); seekToCandidate(candidates[0]) }}>確認する</Button>
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3">
