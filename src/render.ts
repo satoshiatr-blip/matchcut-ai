@@ -136,7 +136,7 @@ export function drawScene(ctx: Ctx, img: CanvasImageSource, w: number, h: number
   drawGrain(ctx, frame)
   if (slow) drawSlowFx(ctx, scene, src, frame)
   drawCorner(ctx, project)
-  drawPlate(ctx, info, accent)
+  if (project.showNames) drawPlate(ctx, info, accent)
   if (dt >= 0 && dt < 1.7) drawSlam(ctx, KIND_BIG[scene.kind], dt, accent, frame)
   if (dt >= 0 && dt < 0.1) {
     ctx.fillStyle = `rgba(255,255,255,${0.75 * (1 - dt / 0.1)})`
