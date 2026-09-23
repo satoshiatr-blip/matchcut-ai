@@ -32,7 +32,9 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
   const [slam, setSlam] = useState<{ n: number; word: string }>({ n: 0, word: '' })
   const [analyzing, setAnalyzing] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [reviewTime, setReviewTime] = useState<number | null>(null)
+  // 候補は「時刻の値」ではなく「何番目か」で覚える。値で突き合わせると、
+  // 浮動小数の誤差などでズレたときに「見つからず先頭に戻る」不具合になるため
+  const [reviewIndex, setReviewIndex] = useState<number | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -43,9 +45,15 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
   const missing = project.sources.filter(s => !files.has(s.key))
   const dur = active?.duration || 1
   const candidates = (active && project.aiCandidates[active.key]) || []
+  const reviewTime = reviewIndex != null ? candidates[reviewIndex] ?? null : null
 
   useEffect(() => { if (videoRef.current) videoRef.current.playbackRate = speed }, [speed, url])
-  useEffect(() => { setReviewTime(null) }, [activeKey])
+  useEffect(() => { setReviewIndex(null) }, [activeKey])
+  // 候補が減って範囲外になったら安全な位置に寄せる（通常はresolveCandidate/stepReviewが直接進めるので保険）
+  useEffect(() => {
+    if (reviewIndex != null && reviewIndex >= candidates.length) setReviewIndex(candidates.length > 0 ? 0 : null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidates.length])
 
   // 動画の読み込みが済んでいなくても確実に移動できるよう、metadataを待ってから動かす
   function seekVideo(t: number) {
@@ -77,27 +85,28 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
     setSlam({ n: Date.now(), word: { goal: 'GOAL!', save: 'SAVE!', play: 'NICE!' }[kind] })
     setToast(`${KIND_JA[kind]}を追加  ${fmt(v.currentTime)}`)
     setTimeout(() => setToast(''), 1600)
-    if (reviewTime != null) resolveCandidate()
+    if (reviewIndex != null) resolveCandidate()
   }
 
-  // レビュー中の候補を消して、残りの中から次（なければ最初）へ進む
+  // レビュー中の候補を消して、残りの中から次（なければ先頭）へ進む。
+  // 削除後は元のreviewIndexの位置に次の候補が繰り上がるので、そのままの番号でよい
   function resolveCandidate() {
-    if (!active || reviewTime == null) return
+    if (!active || reviewIndex == null) return
     const key = active.key
     const list = project.aiCandidates[key] || []
-    const remaining = list.filter(t => t !== reviewTime)
+    const remaining = list.filter((_, i) => i !== reviewIndex)
     setProject(p => ({ ...p, aiCandidates: { ...p.aiCandidates, [key]: remaining } }))
-    const next = remaining.find(t => t > reviewTime) ?? remaining[0] ?? null
-    setReviewTime(next)
-    if (next != null) seekToCandidate(next)
+    if (remaining.length === 0) { setReviewIndex(null); return }
+    const nextIndex = reviewIndex < remaining.length ? reviewIndex : 0
+    setReviewIndex(nextIndex)
+    seekToCandidate(remaining[nextIndex])
   }
 
   function stepReview(dir: 1 | -1) {
-    if (reviewTime == null || candidates.length === 0) return
-    const i = candidates.indexOf(reviewTime)
-    const next = candidates[(i + dir + candidates.length) % candidates.length]
-    setReviewTime(next)
-    seekToCandidate(next)
+    if (reviewIndex == null || candidates.length === 0) return
+    const next = (reviewIndex + dir + candidates.length) % candidates.length
+    setReviewIndex(next)
+    seekToCandidate(candidates[next])
   }
 
   async function analyze() {
@@ -112,7 +121,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
       input.dispose()
       const times = found.map(c => c.t)
       setProject(p => ({ ...p, aiCandidates: { ...p.aiCandidates, [active.key]: times } }))
-      if (times.length) { setReviewTime(times[0]); seekToCandidate(times[0]) }
+      if (times.length) { setReviewIndex(0); seekToCandidate(times[0]) }
       else setToast('目立った歓声は見つかりませんでした')
       setTimeout(() => setToast(''), 2000)
     } catch (e) {
@@ -194,13 +203,13 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
               <Button className="text-sm !min-h-10" onClick={() => stepReview(-1)} disabled={candidates.length < 2}><IconRewind />前の候補</Button>
               <Button className="text-sm !min-h-10" onClick={() => stepReview(1)} disabled={candidates.length < 2}>次の候補<IconForward /></Button>
               <Button className="text-sm !min-h-10" onClick={resolveCandidate}><IconSkip />この候補を消す</Button>
-              <Button className="text-sm !min-h-10" onClick={() => setReviewTime(null)}>あとで見る</Button>
+              <Button className="text-sm !min-h-10" onClick={() => setReviewIndex(null)}>あとで見る</Button>
             </div>
           </>
         ) : candidates.length > 0 ? (
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm"><span className="font-bold text-cyan">{candidates.length}件</span> のAI候補が残っています</span>
-            <Button variant="primary" className="shrink-0 text-sm" onClick={() => { setReviewTime(candidates[0]); seekToCandidate(candidates[0]) }}>確認する</Button>
+            <Button variant="primary" className="shrink-0 text-sm" onClick={() => { setReviewIndex(0); seekToCandidate(candidates[0]) }}>確認する</Button>
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3">
