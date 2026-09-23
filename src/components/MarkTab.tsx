@@ -178,8 +178,9 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
               <span className="text-xs text-muted tabular-nums">残り{candidates.length}件・{fmt(reviewTime)}</span>
             </div>
             <p className="text-xs text-muted">歓声が大きくなった場所です。見せ場ならゴール等をタップ、違えば「この候補を消す」へ</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Button className="text-sm" onClick={() => stepReview(-1)} disabled={candidates.length < 2}><IconRewind />前の候補</Button>
+              <Button className="text-sm" onClick={() => stepReview(1)} disabled={candidates.length < 2}>次の候補<IconForward /></Button>
               <Button className="text-sm" onClick={resolveCandidate}><IconSkip />この候補を消す</Button>
               <Button className="text-sm" onClick={() => setReviewTime(null)}>あとで見る</Button>
             </div>
