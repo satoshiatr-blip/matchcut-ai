@@ -11,6 +11,20 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
+// iOSのdvh/svhはブラウザのツールバー状態によりズレることがあるため、実測した高さをCSS変数として持つ
+function setAppHeight() {
+  // ホーム画面追加（standalone）ではwindow.innerHeightが実際の表示領域より大きく
+  // 返ることがある既知の癖があるため、より正確なvisualViewportを優先する
+  const h = window.visualViewport?.height ?? window.innerHeight
+  document.documentElement.style.setProperty('--app-height', `${h}px`)
+}
+setAppHeight()
+// standalone起動直後はvisualViewportの値がまだ確定していないことがあるので、少し遅れて測り直す
+setTimeout(setAppHeight, 300)
+window.addEventListener('resize', setAppHeight)
+window.addEventListener('pageshow', setAppHeight)
+window.visualViewport?.addEventListener('resize', setAppHeight)
+
 // iOSが容量確保のために保存データ（名簿・BGM）を消さないよう、永続化を頼んでおく
 navigator.storage?.persist?.().catch(() => {})
 

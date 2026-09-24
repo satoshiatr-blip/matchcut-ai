@@ -36,7 +36,7 @@ export default function App() {
   const [restoring, setRestoring] = useState(true)
   const [tab, setTab] = useState<Tab>(project.sources.length ? 'mark' : 'setup')
 
-  const go = (t: Tab) => { setTab(t); window.scrollTo({ top: 0 }) }
+  const go = (t: Tab) => setTab(t)
 
   // アプリを開き直したとき、前回選んだ動画をIndexedDBから自動で読み込む
   useEffect(() => {
@@ -93,8 +93,8 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-svh bg-ink text-fg">
-      <header className="sticky top-0 z-30 bg-ink/85 backdrop-blur-xl border-b border-line px-5 pt-[max(env(safe-area-inset-top),0.75rem)] pb-3">
+    <div className="bg-ink text-fg flex flex-col overflow-hidden" style={{ position: 'fixed', inset: 0 }}>
+      <header className="shrink-0 bg-ink/85 backdrop-blur-xl border-b border-line px-5 pt-[max(env(safe-area-inset-top),0.75rem)] pb-3">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
           <Logo size={38} />
           <div className="min-w-0">
@@ -104,7 +104,7 @@ export default function App() {
         </div>
       </header>
 
-      <main key={tab} className="rise max-w-2xl mx-auto px-5 pt-5 pb-36">
+      <main key={tab} className="rise flex-1 min-h-0 overflow-y-auto max-w-2xl w-full mx-auto px-5 pt-5 pb-5">
         {tab === 'setup' && <SetupTab project={project} setProject={setProject} go={go} onStartNewMatch={startNewMatch} />}
         {tab === 'mark' && <MarkTab project={project} setProject={setProject} files={files} addFiles={addFiles} removeSource={removeSource} go={go} restoring={restoring} />}
         {tab === 'scenes' && <ScenesTab project={project} setProject={setProject} files={files} go={go} />}
@@ -112,7 +112,7 @@ export default function App() {
         {tab === 'reflect' && <ReflectionTab project={project} setProject={setProject} files={files} />}
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 z-30 bg-surface/90 backdrop-blur-xl border-t border-line pb-[env(safe-area-inset-bottom)]">
+      <nav className="shrink-0 bg-surface/90 backdrop-blur-xl border-t border-line pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-2xl mx-auto grid grid-cols-5">
           {TABS.map(({ id, label, Icon }, i) => {
             const active = tab === id

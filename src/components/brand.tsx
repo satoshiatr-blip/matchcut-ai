@@ -1,26 +1,15 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-// シンボル：再生三角形を電光の斬撃が断ち切る
+// アプリアイコンと同じ画像を使う（別物に見えないよう、ヘッダーのロゴも差し替え済みアイコンで統一）
 export const Logo = ({ size = 36 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden>
-    <defs>
-      <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stopColor="#1a73ff" />
-        <stop offset="1" stopColor="#3ee0ff" />
-      </linearGradient>
-    </defs>
-    <rect width="64" height="64" rx="16" fill="#04060c" />
-    <rect x="1.5" y="1.5" width="61" height="61" rx="14.5" fill="none" stroke="url(#lg)" strokeWidth="3" />
-    <path d="M22 16 L48 32 L22 48 Z" fill="url(#lg)" />
-    <path d="M40 8 L27 30 L36 30 L24 56 L44 26 L35 26 L46 8 Z" fill="#fff" stroke="#04060c" strokeWidth="2.5" strokeLinejoin="round" />
-  </svg>
+  <img src="icon-512.png" width={size} height={size} className="rounded-[22%]" alt="" />
 )
 
 export const Wordmark = () => (
   <span className="font-black italic tracking-tight leading-none inline-flex items-center gap-1.5">
     MATCH<span className="text-cyan">CUT</span>
-    <span className="text-[10px] not-italic font-black tracking-widest bg-cyan text-ink rounded px-1.5 py-0.5 align-middle">AI</span>
+    <span className="text-sm not-italic font-black bg-cyan text-ink rounded px-1.5 align-middle">+</span>
   </span>
 )
 

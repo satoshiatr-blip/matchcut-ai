@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { exportHighlight, totalDuration } from '../render'
-import { loadBgm, saveBgm } from '../idb'
+import { loadBgm, loadComment, saveBgm, saveComment } from '../idb'
 import { playImpactNow } from '../sfx'
-import { IconCheck, IconMusic, IconPhoto, IconSaveVideo } from './icons'
+import { IconCheck, IconMusic, IconPhoto, IconSaveVideo, IconVideo } from './icons'
 import { Slam } from './brand'
 import { Button, Card, FilePicker, GroupLabel, Row, ScreenTitle, Portal, Slider, Toast, Toggle, fmt, useObjectUrl, type ProjectProps } from './ui'
 
@@ -16,6 +16,8 @@ const FREE_MUSIC = [
 
 export default function ExportTab({ project, setProject, files, addFiles }: Props) {
   const [bgm, setBgm] = useState<File | null>(null)
+  const [comment, setComment] = useState<File | null>(null)
+  const commentUrl = useObjectUrl(comment)
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState({ p: 0, label: '' })
   const [result, setResult] = useState<File | null>(null)
@@ -34,6 +36,12 @@ export default function ExportTab({ project, setProject, files, addFiles }: Prop
   const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => { loadBgm().then(f => f && setBgm(f)) }, [])
+  useEffect(() => { loadComment().then(f => f && setComment(f)) }, [])
+
+  function changeComment(f: File | null) {
+    setComment(f)
+    saveComment(f)
+  }
 
   async function pickBgm(f: File) {
     const ok = await new Promise<boolean>(resolve => {
@@ -85,7 +93,7 @@ export default function ExportTab({ project, setProject, files, addFiles }: Prop
     const lock = await navigator.wakeLock?.request('screen').catch(() => null)
     const t0 = performance.now()
     try {
-      const f = await exportHighlight({ project, files, bgm, signal: ac.signal, onProgress: (p, label) => setProgress({ p, label }) })
+      const f = await exportHighlight({ project, files, bgm, comment, signal: ac.signal, onProgress: (p, label) => setProgress({ p, label }) })
       setElapsed((performance.now() - t0) / 1000)
       setResult(f)
       setDone(Date.now())
@@ -203,6 +211,21 @@ export default function ExportTab({ project, setProject, files, addFiles }: Prop
           <p className="text-[11px] text-muted leading-relaxed">
             利用条件（クレジット表記の要否・SNSでの使用など）は曲やサイトごとに違います。公開する前に各サイトの規約を確認してください。市販の曲はSNSで著作権の問題になることがあります。
           </p>
+        </Card>
+      </div>
+
+      <div>
+        <GroupLabel>本人コメント</GroupLabel>
+        <Card className="space-y-4">
+          <p className="text-xs text-muted">動画の最後（エンディングの前）に、短い一言コメントを挿入できます（任意・20秒まで）</p>
+          <FilePicker accept="video/*" multiple={false} onFiles={f => changeComment(f[0])}
+            className="w-full min-h-12 px-4 rounded-xl bg-raised border border-line !justify-start text-sm">
+            <IconVideo className="text-cyan text-lg shrink-0" /><span className="truncate flex-1 text-left">{comment ? comment.name : '動画を選ぶ・撮影する'}</span>
+          </FilePicker>
+          {comment && commentUrl && <>
+            <video src={commentUrl} controls playsInline className="w-full rounded-xl bg-black aspect-video" />
+            <button className="text-sm text-danger font-bold" onClick={() => changeComment(null)}>コメントを外す</button>
+          </>}
         </Card>
       </div>
 

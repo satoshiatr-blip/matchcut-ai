@@ -15,6 +15,7 @@ export type ReflectionNote = {
   kind: NoteKind
   theme: string // 例:「逆足トラップ」。空でもよい
   note: string // 本人の一言
+  hasClip?: boolean // この瞬間の短い動画（growthClip）を端末に保存できたか
 }
 
 const KEY = 'matchcut-ai:reflections'

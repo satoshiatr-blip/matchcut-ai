@@ -47,3 +47,14 @@ const videoKey = (key: string) => `video:${key}`
 export const loadSourceVideo = (key: string) => idbGet<File>(videoKey(key))
 export const saveSourceVideo = (key: string, f: File) => idbSet(videoKey(key), f)
 export const deleteSourceVideo = (key: string) => idbSet(videoKey(key), null)
+
+// 振り返りメモの瞬間だけ切り出した短い動画。試合動画（数GB・新しい試合で消える）と別に、
+// 振り返りメモと同じくずっと残す。見比べ・成長ムービーの素材になる
+const clipKey = (noteId: string) => `growthclip:${noteId}`
+export const loadGrowthClip = (noteId: string) => idbGet<File>(clipKey(noteId))
+export const saveGrowthClip = (noteId: string, f: File) => idbSet(clipKey(noteId), f)
+export const deleteGrowthClip = (noteId: string) => idbSet(clipKey(noteId), null)
+
+// 本人の一言コメント動画（書き出し時に末尾へ挿入）
+export const loadComment = () => idbGet<File>('comment')
+export const saveComment = (f: File | null) => idbSet('comment', f)

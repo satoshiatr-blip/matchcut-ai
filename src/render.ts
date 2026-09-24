@@ -137,7 +137,7 @@ export function drawScene(ctx: Ctx, img: CanvasImageSource, w: number, h: number
   if (slow) drawSlowFx(ctx, scene, src, frame)
   drawCorner(ctx, project)
   if (project.showNames) drawPlate(ctx, info, accent)
-  if (dt >= 0 && dt < 1.7) drawSlam(ctx, KIND_BIG[scene.kind], dt, accent, frame)
+  if (dt >= 0 && dt < 1.7) drawSlam(ctx, KIND_BIG[scene.kind], dt, accent)
   if (dt >= 0 && dt < 0.1) {
     ctx.fillStyle = `rgba(255,255,255,${0.75 * (1 - dt / 0.1)})`
     ctx.fillRect(0, 0, OUT_W, OUT_H)
@@ -298,37 +298,34 @@ function drawPlate(ctx: Ctx, { scene, player, tOut, dur }: DrawInfo, accent: str
   ctx.restore()
 }
 
-// 決定的瞬間に叩きつけるワード（RGBずれ→収束）
-function drawSlam(ctx: Ctx, word: string, dt: number, accent: string, frame: number) {
+// 決定的瞬間に叩きつけるワード（単色＋差し色1本のミニマル構成。海外ハイライトのロワーサード傾向に合わせグリッチ二重像は廃止）
+function drawSlam(ctx: Ctx, word: string, dt: number, accent: string) {
   const inK = ease(clamp(dt / 0.14, 0, 1))
   const out = clamp((1.7 - dt) / 0.35, 0, 1)
-  const scale = 1.9 - 0.9 * inK
-  const split = 26 * (1 - inK) + (dt < 0.5 ? 6 * rnd(frame) : 2)
+  const scale = 1.5 - 0.5 * inK
   ctx.save()
   ctx.globalAlpha = out
-  // 中央だと選手が隠れるので右上（空・背景側）に置く
-  ctx.translate(OUT_W - 90, 160)
-  ctx.rotate(-0.05)
+  // 中央だと選手が隠れるので右上（空・背景側）に置く。ポップイン時の1.5倍スケールでも上端が切れない余白を確保
+  ctx.translate(OUT_W - 90, 260)
+  ctx.rotate(-0.04)
   ctx.scale(scale, scale)
-  ctx.transform(1, 0, -0.2, 1, 0, 0)
+  ctx.transform(1, 0, -0.16, 1, 0, 0)
   ctx.font = `italic 900 ${word.length > 5 ? 120 : 160}px ${FONT}`
   ctx.textAlign = 'right'
   ctx.textBaseline = 'middle'
-  ctx.globalCompositeOperation = 'lighter'
-  ctx.fillStyle = 'rgba(255,0,90,0.7)'
-  ctx.fillText(word, split, 0)
-  ctx.fillStyle = 'rgba(0,200,255,0.8)'
-  ctx.fillText(word, -split, 0)
-  ctx.globalCompositeOperation = 'source-over'
   ctx.lineJoin = 'round'
   ctx.lineWidth = 14
   ctx.strokeStyle = INK
   ctx.shadowColor = accent
-  ctx.shadowBlur = 40
+  ctx.shadowBlur = 32
   ctx.strokeText(word, 0, 0)
   ctx.shadowBlur = 0
   ctx.fillStyle = '#fff'
   ctx.fillText(word, 0, 0)
+  // 差し色の細い一本線（海外の最小構成ロワーサードに寄せたアクセント）
+  const w = ctx.measureText(word).width
+  ctx.fillStyle = accent
+  ctx.fillRect(-w - 4, 28, w + 4, 6)
   ctx.restore()
 }
 
@@ -506,11 +503,46 @@ type ExportOpts = {
   project: Project
   files: Map<string, File>
   bgm: File | null
+  comment: File | null
   onProgress: (p: number, label: string) => void
   signal: AbortSignal
 }
 
-export async function exportHighlight({ project, files, bgm, onProgress, signal }: ExportOpts): Promise<File> {
+const COMMENT_MAX = 20
+
+async function probeComment(file: File) {
+  const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS })
+  const vTrack = await input.getPrimaryVideoTrack()
+  if (!vTrack) { input.dispose(); return null }
+  const aTrack = await input.getPrimaryAudioTrack()
+  const dur = Math.min(await input.computeDuration(), COMMENT_MAX)
+  return { input, vTrack, aTrack, dur }
+}
+
+// ラストの本人コメント区間：映像はそのまま、左下に控えめなラベルだけ添える
+function drawComment(ctx: Ctx, img: CanvasImageSource, t: number, dur: number) {
+  ctx.drawImage(img, 0, 0, OUT_W, OUT_H)
+  drawVignette(ctx, 0.35)
+  const a = Math.min(ease(clamp(t / 0.4, 0, 1)), ease(clamp((dur - t) / 0.4, 0, 1)))
+  ctx.save()
+  ctx.globalAlpha = a
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+  ctx.font = `700 25px ${FONT}`
+  ctx.fillStyle = CYAN
+  const y = OUT_H - 70
+  const w = spacedWidth(ctx, 'FROM THE PLAYER', 9)
+  spaced(ctx, 'FROM THE PLAYER', 70, y, 9)
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(70, y + 16)
+  ctx.lineTo(70 + w, y + 16)
+  ctx.stroke()
+  ctx.restore()
+}
+
+export async function exportHighlight({ project, files, bgm, comment, onProgress, signal }: ExportOpts): Promise<File> {
   const scenes = project.scenes
   const inputs = new Map<string, Input>()
   const getInput = (key: string) => {
@@ -523,14 +555,15 @@ export async function exportHighlight({ project, files, bgm, onProgress, signal 
     }
     return inp
   }
+  const commentInfo = comment ? await probeComment(comment) : null
 
   try {
     if (!(await canEncodeVideo('avc', { width: OUT_W, height: OUT_H })))
       throw new Error('この端末のブラウザは動画の書き出し（H.264）に対応していません。iOSを最新にしてお試しください')
     await ensureAac()
-    const total = totalDuration(scenes)
+    const total = totalDuration(scenes) + (commentInfo?.dur ?? 0)
     onProgress(0, '音声を準備中')
-    const audio = await renderAudio(project, getInput, bgm, total)
+    const audio = await renderAudio(project, getInput, bgm, total, commentInfo)
 
     const canvas = new OffscreenCanvas(OUT_W, OUT_H)
     const ctx = canvas.getContext('2d')!
@@ -576,6 +609,17 @@ export async function exportHighlight({ project, files, bgm, onProgress, signal 
         k++
       }
     }
+    if (commentInfo) {
+      const sink = new CanvasSink(commentInfo.vTrack, { width: OUT_W, height: OUT_H, fit: 'cover', poolSize: 2 })
+      const n = Math.round(commentInfo.dur * FPS)
+      const times = Array.from({ length: n }, (_, k) => k / FPS)
+      let k = 0
+      for await (const wc of sink.canvasesAtTimestamps(times)) {
+        if (wc) drawComment(ctx, wc.canvas, k / FPS, commentInfo.dur)
+        await emit()
+        k++
+      }
+    }
     for (let i = 0; i < CLOSE_SEC * FPS; i++) {
       drawCard(ctx, project, 'close', i / FPS, CLOSE_SEC)
       await emit()
@@ -589,10 +633,13 @@ export async function exportHighlight({ project, files, bgm, onProgress, signal 
     return new File([buf], name, { type: 'video/mp4' })
   } finally {
     inputs.forEach(i => i.dispose())
+    commentInfo?.input.dispose()
   }
 }
 
-async function renderAudio(project: Project, getInput: (k: string) => Input, bgm: File | null, total: number) {
+type CommentInfo = { aTrack: Awaited<ReturnType<Input['getPrimaryAudioTrack']>>; dur: number }
+
+async function renderAudio(project: Project, getInput: (k: string) => Input, bgm: File | null, total: number, commentInfo: CommentInfo | null) {
   const ac = new OfflineAudioContext(2, Math.ceil(total * SAMPLE_RATE), SAMPLE_RATE)
   // 効果音・試合音・BGMを重ねても割れないよう、最後にコンプレッサーを通す
   const master = ac.createDynamicsCompressor()
@@ -630,6 +677,20 @@ async function renderAudio(project: Project, getInput: (k: string) => Input, bgm
       }
     }
     t += dur
+  }
+  if (commentInfo?.aTrack) {
+    const buf = await readAudio(ac, commentInfo.aTrack, 0, commentInfo.dur)
+    const node = ac.createBufferSource()
+    node.buffer = buf
+    const gain = ac.createGain()
+    const f = Math.min(0.3, commentInfo.dur / 4)
+    gain.gain.setValueAtTime(0, t)
+    gain.gain.linearRampToValueAtTime(1, t + f)
+    gain.gain.setValueAtTime(1, t + commentInfo.dur - f)
+    gain.gain.linearRampToValueAtTime(0, t + commentInfo.dur)
+    node.connect(gain).connect(master)
+    node.start(t, 0, commentInfo.dur)
+    t += commentInfo.dur
   }
   if (bgm) {
     const music = await ac.decodeAudioData(await bgm.arrayBuffer())

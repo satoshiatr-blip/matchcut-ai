@@ -9,6 +9,7 @@ import { IconBall, IconForward, IconGlove, IconPlus, IconRewind, IconSkip, IconS
 import { Button, Card, FilePicker, ScreenTitle, Toast, fmt, useObjectUrl, type ProjectProps } from './ui'
 import { Slam } from './brand'
 import { playImpactNow } from '../sfx'
+import { isStandalone } from '../storageInfo'
 
 type Props = ProjectProps & {
   files: Map<string, File>
@@ -167,6 +168,11 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
           <p className="text-sm text-amber-200">保存していた動画が見つかりませんでした。次の動画をもう一度選んでください</p>
           <ul className="text-xs text-amber-200/80 list-disc pl-5">{missing.map(m => <li key={m.key}>{m.name}</li>)}</ul>
           <FilePicker onFiles={addFiles} className="w-full min-h-11 rounded-xl bg-amber-400 text-ink">動画を選び直す</FilePicker>
+          {!isStandalone() && (
+            <p className="text-xs text-amber-200/70 border-t border-amber-400/20 pt-2">
+              Safariのタブのままだと、iOSが容量確保のために動画データを消すことがあります。共有ボタン→「ホーム画面に追加」から開くと消えにくくなります
+            </p>
+          )}
         </Card>
       )}
 

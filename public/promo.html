@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-512.png">
+<title>MATCHCUT+</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0616;font-family:'Noto Sans JP',sans-serif;color:#f2e8ff;max-width:480px;margin:0 auto;}
+.sec{padding:48px 20px;border-bottom:1px solid rgba(255,255,255,0.05);}
+.lbl{font-size:9px;font-weight:700;letter-spacing:3px;color:#e13bff;text-transform:uppercase;margin-bottom:4px;}
+.sech{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;margin-bottom:20px;}
+.hero{padding:56px 20px 40px;border-bottom:1px solid rgba(255,255,255,0.05);background:radial-gradient(ellipse 120% 60% at 50% 0%, rgba(225,59,255,0.08) 0%, transparent 70%);}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:700;letter-spacing:2px;color:#e13bff;background:rgba(225,59,255,0.08);border:1px solid rgba(225,59,255,0.2);padding:5px 12px;border-radius:100px;margin-bottom:20px;}
+.live{width:6px;height:6px;border-radius:50%;background:#e13bff;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.hero-h1{font-family:'Bebas Neue',sans-serif;font-size:64px;letter-spacing:3px;line-height:0.95;margin-bottom:14px;}
+.hero-h1 em{color:#e13bff;font-style:normal;display:block;}
+.hero-desc{font-size:13px;color:rgba(242,232,255,0.55);line-height:1.7;margin-bottom:24px;}
+.hero-desc strong{color:#f2e8ff;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,0.05);border-radius:12px;overflow:hidden;margin-top:20px;}
+.stat{background:#0a0616;padding:14px 6px;text-align:center;}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#e13bff;line-height:1;}
+.stat-l{font-size:9px;color:rgba(242,232,255,0.4);margin-top:2px;letter-spacing:0.3px;}
+.cta-box{background:rgba(225,59,255,0.12);border:2px solid rgba(225,59,255,0.5);border-radius:14px;padding:18px 20px;text-align:center;}
+.cta-box-l{font-size:11px;color:rgba(225,59,255,0.6);letter-spacing:2px;font-weight:700;margin-bottom:6px;}
+.cta-box-m{font-size:22px;font-weight:900;color:#e13bff;letter-spacing:1px;}
+.cta-box-u{font-size:10px;color:rgba(225,59,255,0.45);margin-top:6px;font-family:'Space Mono',monospace;word-break:break-all;}
+.steps{display:flex;flex-direction:column;gap:8px;}
+.step{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:14px 16px;}
+.sn{font-family:'Bebas Neue',sans-serif;font-size:28px;color:rgba(225,59,255,0.2);line-height:1;width:28px;flex-shrink:0;text-align:center;}
+.st{font-weight:900;font-size:13px;}
+.sd{font-size:11px;color:rgba(242,232,255,0.45);margin-top:2px;line-height:1.5;}
+.stag{margin-left:auto;flex-shrink:0;font-size:9px;font-weight:700;color:rgba(225,59,255,0.6);background:rgba(225,59,255,0.07);border:1px solid rgba(225,59,255,0.15);padding:3px 8px;border-radius:100px;white-space:nowrap;}
+.feats{display:flex;flex-direction:column;gap:10px;}
+.feat{display:flex;gap:12px;background:rgba(225,59,255,0.02);border:1px solid rgba(225,59,255,0.15);border-radius:12px;padding:14px 16px;}
+.fi{font-size:22px;flex-shrink:0;line-height:1;}
+.ft{font-weight:900;font-size:13px;color:#f2e8ff;margin-bottom:3px;}
+.fd{font-size:11px;color:rgba(242,232,255,0.55);line-height:1.6;}
+.cta{padding:48px 20px;text-align:center;}
+.cta-h{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:4px;margin-bottom:8px;}
+.cta-s{font-size:12px;color:rgba(242,232,255,0.4);margin-bottom:24px;letter-spacing:1px;}
+.chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
+.chip{font-size:10px;font-weight:700;letter-spacing:0.5px;padding:5px 11px;border-radius:100px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);color:rgba(242,232,255,0.4);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag"><span class="live"></span>少年サッカー向け 無料Webアプリ</div>
+  <div class="hero-h1">MATCHCUT<em>+</em></div>
+  <p class="hero-desc">MATCHCUTに、<strong>AIによる名場面検出と振り返り機能</strong>をプラス。<br>成長の記録も1つのアプリで。</p>
+  <a href="https://satoshiatr-blip.github.io/matchcut-ai/" target="_blank" style="text-decoration:none;display:block;">
+    <div class="cta-box">
+      <div class="cta-box-l">インストール不要・完全無料</div>
+      <div class="cta-box-m">&#9654; タップして開く</div>
+      <div class="cta-box-u">satoshiatr-blip.github.io/matchcut-ai/</div>
+    </div>
+  </a>
+  <div class="stats">
+    <div class="stat"><div class="stat-n">AI</div><div class="stat-l">歓声検出</div></div>
+    <div class="stat"><div class="stat-n">5</div><div class="stat-l">タブ数</div></div>
+    <div class="stat"><div class="stat-n">0円</div><div class="stat-l">完全無料</div></div>
+    <div class="stat"><div class="stat-n">不要</div><div class="stat-l">インストール</div></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="lbl">Getting Started</div>
+  <h2 class="sech">はじめ方</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="sn">1</div>
+      <div><div class="st">🎥 試合動画を選ぶ</div><div class="sd">MATCHCUTと同じ編集機能はすべて使えます</div></div>
+      <div class="stag">動画を選ぶ</div>
+    </div>
+    <div class="step">
+      <div class="sn">2</div>
+      <div><div class="st">✨ AI候補を確認</div><div class="sd">歓声が盛り上がった瞬間を自動で提示</div></div>
+      <div class="stag">AI検出</div>
+    </div>
+    <div class="step">
+      <div class="sn">3</div>
+      <div><div class="st">📝 振り返りを記録</div><div class="sd">見返しながら「できた」「次に試す」をメモ</div></div>
+      <div class="stag">振り返り</div>
+    </div>
+    <div class="step">
+      <div class="sn">4</div>
+      <div><div class="st">🎬 成長ムービーを作る</div><div class="sd">記録した瞬間をつなげて1本の動画に</div></div>
+      <div class="stag">成長ムービー</div>
+    </div>
+  </div>
+</div>
+
+<div class="sec" style="background:rgba(225,59,255,0.015);">
+  <div class="lbl">Feature</div>
+  <h2 class="sech">できること</h2>
+  <div class="feats">
+    <div class="feat">
+      <div class="fi">✨</div>
+      <div><div class="ft">AI歓声ピーク検出</div><div class="fd">動画の音声を解析し、盛り上がった瞬間を自動で提示（確定は必ず本人が行う）</div></div>
+    </div>
+    <div class="feat">
+      <div class="fi">🙈</div>
+      <div><div class="ft">選手名を非表示</div><div class="fd">テロップの名前・背番号を隠して広く共有できる</div></div>
+    </div>
+    <div class="feat">
+      <div class="fi">📝</div>
+      <div><div class="ft">振り返りメモ</div><div class="fd">「できた」「次に試す」をテーマ別・時系列で記録、比較できる</div></div>
+    </div>
+    <div class="feat">
+      <div class="fi">🎬</div>
+      <div><div class="ft">瞬間クリップの書き出し</div><div class="fd">記録したその場面だけを短い動画として保存・共有できる</div></div>
+    </div>
+    <div class="feat">
+      <div class="fi">🎤</div>
+      <div><div class="ft">本人コメント挿入</div><div class="fd">完成動画の最後に、選手本人が話す一言クリップを追加</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="cta">
+  <div class="lbl" style="margin-bottom:8px;">今すぐ無料で使う</div>
+  <div class="cta-h">OPEN &amp; PLAY</div>
+  <p class="cta-s">登録・インストール不要。タップするだけで即起動。</p>
+  <a href="https://satoshiatr-blip.github.io/matchcut-ai/" target="_blank" style="text-decoration:none;display:block;">
+    <div class="cta-box">
+      <div class="cta-box-l">完全無料・今すぐ使える</div>
+      <div class="cta-box-m">&#9654; タップして開く</div>
+      <div class="cta-box-u">satoshiatr-blip.github.io/matchcut-ai/</div>
+    </div>
+  </a>
+  <div class="chips">
+    <span class="chip">&#10003; 完全無料</span>
+    <span class="chip">&#10003; iPhone対応</span>
+    <span class="chip">&#10003; インストール不要</span>
+    <span class="chip">&#10003; データは端末内のみ</span>
+  </div>
+</div>
+
+</body>
+</html>

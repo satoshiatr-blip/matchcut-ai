@@ -1,11 +1,31 @@
+import { useEffect, useState } from 'react'
 import type { Tab } from '../App'
+import { exportBackup, importBackup } from '../backup'
+import { getStorageInfo, isStandalone, type StorageInfo } from '../storageInfo'
 import { uid } from '../types'
 import { IconPlus, IconTrash, IconUp } from './icons'
-import { Button, Card, Field, GroupLabel, ScreenTitle, inputCls, type ProjectProps } from './ui'
+import { Button, Card, Field, FilePicker, GroupLabel, ScreenTitle, inputCls, type ProjectProps } from './ui'
 
-const COLORS = ['#1a73ff', '#3ee0ff', '#ff3b5c', '#22c55e', '#a855f7', '#f97316', '#facc15', '#e5e7eb']
+const COLORS = ['#e13bff', '#3ee0ff', '#ff3b5c', '#22c55e', '#1a73ff', '#f97316', '#facc15', '#e5e7eb']
+const GB = (n: number) => (n / 1e9).toFixed(1)
 
 export default function SetupTab({ project, setProject, go, onStartNewMatch }: ProjectProps & { go: (t: Tab) => void; onStartNewMatch: () => void }) {
+  const [storage, setStorage] = useState<StorageInfo | null>(null)
+  useEffect(() => { getStorageInfo().then(setStorage) }, [])
+  const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  async function onImportBackup(files: FileList) {
+    const f = files[0]
+    if (!f) return
+    if (!confirm('今のデータを上書きして復元します。よろしいですか？')) return
+    const r = await importBackup(f)
+    if (r.ok) {
+      setImportMsg({ ok: true, text: '復元しました。反映のため再読み込みします…' })
+      setTimeout(() => location.reload(), 600)
+    } else {
+      setImportMsg({ ok: false, text: r.error })
+    }
+  }
   const set = <K extends keyof typeof project>(k: K, v: (typeof project)[K]) => setProject(p => ({ ...p, [k]: v }))
   const updatePlayer = (id: string, patch: { number?: string; name?: string }) =>
     setProject(p => ({ ...p, players: p.players.map(x => x.id === id ? { ...x, ...patch } : x) }))
@@ -84,16 +104,33 @@ export default function SetupTab({ project, setProject, go, onStartNewMatch }: P
       {project.sources.length > 0 && (
         <div>
           <GroupLabel>保存している動画</GroupLabel>
-          <Card className="flex items-center justify-between gap-3">
+          <Card className="space-y-2">
             <div>
-              <p className="text-sm font-bold">{project.sources.length}本・約{(project.sources.reduce((a, s) => a + s.size, 0) / 1e9).toFixed(1)}GB</p>
+              <p className="text-sm font-bold">{project.sources.length}本・約{GB(project.sources.reduce((a, s) => a + s.size, 0))}GB</p>
               <p className="text-xs text-muted mt-0.5">アプリを開き直しても選び直さなくて済むよう、端末に保存しています</p>
             </div>
+            {storage?.persisted === false && !isStandalone() && (
+              <p className="text-[11px] text-amber-300/90 border-t border-line pt-2">
+                Safariのタブのままだと消えやすい状態です。共有ボタン→「ホーム画面に追加」から開くと消えにくくなります
+              </p>
+            )}
           </Card>
         </div>
       )}
 
       <Button variant="primary" className="w-full min-h-14 text-lg" onClick={() => go('mark')}>次へ：動画を選ぶ</Button>
+
+      <div>
+        <GroupLabel>データのバックアップ</GroupLabel>
+        <Card className="space-y-3">
+          <p className="text-xs text-muted">振り返り・選手名簿・試合設定をファイルに書き出せます（動画本体は含みません）</p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button className="min-h-11" onClick={exportBackup}>書き出す</Button>
+            <FilePicker accept="application/json" multiple={false} onFiles={onImportBackup} className="min-h-11 rounded-xl border border-line">復元する</FilePicker>
+          </div>
+          {importMsg && <p className={`text-xs ${importMsg.ok ? 'text-emerald-400' : 'text-danger'}`}>{importMsg.text}</p>}
+        </Card>
+      </div>
 
       <button className="w-full py-3 text-sm text-danger/80" onClick={onStartNewMatch}>新しい試合を始める</button>
     </div>
