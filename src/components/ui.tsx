@@ -87,11 +87,14 @@ export const Row = ({ label, children, hint }: { label: ReactNode; children: Rea
 )
 
 // iOSは一時停止中にcurrentTimeを変えても画面が更新されないことがあるため、
-// 一時停止中のシークの後は軽く再生→即停止して描画を促す
+// シークの後は軽く再生→元が停止中だったら即戻す、で描画を促す。
+// v.pausedを事前チェックすると、連続タップで直前のplay()がまだ解決していない
+// タイミングでは値が信用できず、ナッジ自体が飛ばされることがあるため常に実行する
 export function seekTo(v: HTMLVideoElement | null, t: number) {
   if (!v) return
+  const wasPaused = v.paused
   v.currentTime = Math.min(v.duration || t, Math.max(0, t))
-  if (v.paused) v.play().then(() => v.pause()).catch(() => {})
+  v.play().then(() => { if (wasPaused) v.pause() }).catch(() => {})
 }
 
 export const fmt = (sec: number) => {
