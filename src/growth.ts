@@ -11,9 +11,41 @@ const CLIP_H = 540
 const CLIP_FPS = 24
 const PRE = 2.5
 const POST = 3.5
+const FONT = '-apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif'
+
+function truncate(ctx: OffscreenCanvasRenderingContext2D, text: string, maxWidth: number) {
+  if (ctx.measureText(text).width <= maxWidth) return text
+  let t = text
+  while (t.length > 1 && ctx.measureText(t + '…').width > maxWidth) t = t.slice(0, -1)
+  return t + '…'
+}
+
+// 動画の下にテーマ・本人の一言を焼き込む
+function drawInfoBar(ctx: OffscreenCanvasRenderingContext2D, theme: string, note: string) {
+  if (!theme && !note) return
+  const padX = 20
+  const h = theme && note ? 76 : 46
+  const y = CLIP_H - h
+  ctx.fillStyle = 'rgba(4,6,12,0.72)'
+  ctx.fillRect(0, y, CLIP_W, h)
+  let ty = y + (theme && note ? 30 : 29)
+  if (theme) {
+    ctx.font = '900 24px ' + FONT
+    ctx.fillStyle = '#e13bff'
+    ctx.textAlign = 'left'
+    ctx.fillText(truncate(ctx, theme, CLIP_W - padX * 2), padX, ty)
+    ty += 28
+  }
+  if (note) {
+    ctx.font = '600 20px ' + FONT
+    ctx.fillStyle = 'rgba(255,255,255,0.92)'
+    ctx.textAlign = 'left'
+    ctx.fillText(truncate(ctx, note, CLIP_W - padX * 2), padX, ty)
+  }
+}
 
 // メモを記録した瞬間の前後だけを、軽い解像度で切り出して保存する
-export async function extractGrowthClip(noteId: string, sourceFile: File, atTime: number): Promise<boolean> {
+export async function extractGrowthClip(noteId: string, sourceFile: File, atTime: number, theme: string, note: string): Promise<boolean> {
   const input = new Input({ source: new BlobSource(sourceFile), formats: ALL_FORMATS })
   try {
     if (!(await canEncodeVideo('avc', { width: CLIP_W, height: CLIP_H }))) return false
@@ -44,6 +76,7 @@ export async function extractGrowthClip(noteId: string, sourceFile: File, atTime
     let i = 0
     for await (const wc of sink.canvasesAtTimestamps(times)) {
       if (wc) ctx.drawImage(wc.canvas, 0, 0, CLIP_W, CLIP_H)
+      drawInfoBar(ctx, theme, note)
       await video.add(i / CLIP_FPS, 1 / CLIP_FPS)
       i++
     }

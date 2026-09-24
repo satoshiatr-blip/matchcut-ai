@@ -211,7 +211,7 @@ function NoteRow({ note: n, sourceFile, onJump, onUpdate, onDelete }: {
     if (!file) {
       if (!sourceFile) { setError(true); return }
       setBusy(true)
-      const ok = await extractGrowthClip(n.id, sourceFile, n.time)
+      const ok = await extractGrowthClip(n.id, sourceFile, n.time, n.theme, n.note)
       setBusy(false)
       if (!ok) { setError(true); return }
       onUpdate({ hasClip: true })
