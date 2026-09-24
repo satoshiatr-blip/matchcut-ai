@@ -7,6 +7,7 @@ import type { InputAudioTrack } from 'mediabunny'
 export type Candidate = { t: number; score: number }
 
 const BUCKET_SEC = 0.2
+const CHEER_LAG_SEC = 5 // 歓声が盛り上がるのはプレーの少し後なので、候補地点はその分だけ手前にする
 
 export async function findCheerPeaks(
   input: Input,
@@ -99,7 +100,8 @@ export async function findCheerPeaks(
     const riseBonus = base > 0 ? rise / base : 0
 
     const level = base > 0 ? smooth[i] / base : smooth[i]
-    raw.push({ t: i * BUCKET_SEC, score: level * (1 + Math.min(1, riseBonus)) })
+    // 歓声が大きくなる頃には、プレー自体はもう終わっている。候補地点は歓声のピークより手前にずらす
+    raw.push({ t: Math.max(0, i * BUCKET_SEC - CHEER_LAG_SEC), score: level * (1 + Math.min(1, riseBonus)) })
   }
 
   // 近い候補は一番スコアが高いものだけ残す
