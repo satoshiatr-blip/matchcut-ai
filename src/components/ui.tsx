@@ -86,6 +86,14 @@ export const Row = ({ label, children, hint }: { label: ReactNode; children: Rea
   </div>
 )
 
+// iOSは一時停止中にcurrentTimeを変えても画面が更新されないことがあるため、
+// 一時停止中のシークの後は軽く再生→即停止して描画を促す
+export function seekTo(v: HTMLVideoElement | null, t: number) {
+  if (!v) return
+  v.currentTime = Math.min(v.duration || t, Math.max(0, t))
+  if (v.paused) v.play().then(() => v.pause()).catch(() => {})
+}
+
 export const fmt = (sec: number) => {
   const s = Math.max(0, sec)
   const m = Math.floor(s / 60)

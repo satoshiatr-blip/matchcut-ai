@@ -6,7 +6,7 @@ import { POST_SEC, PRE_SEC, newScene } from '../store'
 import type { SceneKind } from '../types'
 import { KIND_JA } from '../types'
 import { IconBall, IconForward, IconGlove, IconPlus, IconRewind, IconSkip, IconSpark, IconVideo, IconWave } from './icons'
-import { Button, Card, FilePicker, ScreenTitle, Toast, fmt, useObjectUrl, type ProjectProps } from './ui'
+import { Button, Card, FilePicker, ScreenTitle, Toast, fmt, seekTo, useObjectUrl, type ProjectProps } from './ui'
 import { Slam } from './brand'
 import { playImpactNow } from '../sfx'
 import { isStandalone } from '../storageInfo'
@@ -61,7 +61,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
   function seekVideo(t: number) {
     const v = videoRef.current
     if (!v) return
-    const apply = () => { v.currentTime = Math.min(v.duration || t, Math.max(0, t)); v.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) }
+    const apply = () => { seekTo(v, t); v.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) }
     if (v.readyState >= 1) apply()
     else v.addEventListener('loadedmetadata', apply, { once: true })
   }
@@ -75,7 +75,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
 
   const seek = (d: number) => {
     const v = videoRef.current
-    if (v) v.currentTime = Math.min(v.duration || 0, Math.max(0, v.currentTime + d))
+    if (v) seekTo(v, v.currentTime + d)
   }
 
   function mark(kind: SceneKind) {
@@ -257,7 +257,7 @@ export default function MarkTab({ project, setProject, files, addFiles, removeSo
             <span key={t} className="absolute top-1 bottom-1 w-0.5 bg-cyan/50" style={{ left: `${(t / dur) * 100}%` }} />
           ))}
           {marks.map(m => (
-            <button key={m.id} aria-label={`${KIND_JA[m.kind]} ${fmt(m.mark)}`} onClick={() => videoRef.current && (videoRef.current.currentTime = m.start)}
+            <button key={m.id} aria-label={`${KIND_JA[m.kind]} ${fmt(m.mark)}`} onClick={() => seekTo(videoRef.current, m.start)}
               className="absolute inset-y-0 w-6 -ml-3 grid place-items-center" style={{ left: `${(m.mark / dur) * 100}%` }}>
               <span className={`w-1.5 h-6 rounded-full ${KIND_UI[m.kind].dot}`} />
             </button>
