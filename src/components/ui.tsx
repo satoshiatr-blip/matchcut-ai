@@ -88,13 +88,28 @@ export const Row = ({ label, children, hint }: { label: ReactNode; children: Rea
 
 // iOSは一時停止中にcurrentTimeを変えても画面が更新されないことがあるため、
 // シークの後は軽く再生→元が停止中だったら即戻す、で描画を促す。
-// v.pausedを事前チェックすると、連続タップで直前のplay()がまだ解決していない
-// タイミングでは値が信用できず、ナッジ自体が飛ばされることがあるため常に実行する
+// ただし遠い位置へのシークほど実際に完了するまで時間差があり、完了前にナッジすると
+// 再生開始位置が定まらず「動いたり動かなかったり」になる。seekedイベント（=実際に
+// シークが完了した通知）を待ってからナッジすることで、この時間差の影響を受けないようにする
 export function seekTo(v: HTMLVideoElement | null, t: number) {
   if (!v) return
+  const target = Math.min(v.duration || t, Math.max(0, t))
   const wasPaused = v.paused
-  v.currentTime = Math.min(v.duration || t, Math.max(0, t))
-  v.play().then(() => { if (wasPaused) v.pause() }).catch(() => {})
+  const nudge = () => { v.play().then(() => { if (wasPaused) v.pause() }).catch(() => {}) }
+
+  // 既にほぼ同じ位置なら、そもそもseekedが発火しないことがあるので即ナッジ
+  if (Math.abs(v.currentTime - target) < 0.05) { nudge(); return }
+
+  let done = false
+  const finish = () => {
+    if (done) return
+    done = true
+    v.removeEventListener('seeked', finish)
+    nudge()
+  }
+  v.addEventListener('seeked', finish, { once: true })
+  setTimeout(finish, 800) // 万一seekedが発火しない場合の保険
+  v.currentTime = target
 }
 
 export const fmt = (sec: number) => {
