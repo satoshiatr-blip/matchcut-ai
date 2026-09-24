@@ -58,7 +58,7 @@ export default function SetupTab({ project, setProject, go, onStartNewMatch }: P
             <Field label="自チーム"><input className={inputCls} value={project.team} placeholder="〇〇FC" onChange={e => set('team', e.target.value)} /></Field>
             <Field label="対戦相手"><input className={inputCls} value={project.opponent} placeholder="△△SC" onChange={e => set('opponent', e.target.value)} /></Field>
           </div>
-          <Field label="日付"><input type="date" className={inputCls} value={project.date} onChange={e => set('date', e.target.value)} /></Field>
+          <Field label="日付"><input type="date" className={`${inputCls} appearance-none min-w-0`} value={project.date} onChange={e => set('date', e.target.value)} /></Field>
         </Card>
       </div>
 
