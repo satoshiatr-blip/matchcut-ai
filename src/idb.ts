@@ -39,22 +39,31 @@ export async function idbSet(key: string, value: unknown) {
   else await withStore('readwrite', store => store.put(value, key))
 }
 
-export const loadBgm = () => idbGet<File>('bgm')
+// 動画・音声はBlobとしてしか使えない。旧版の書き込みや壊れた値が残っていると
+// URL.createObjectURL が例外を投げて画面が落ちるので、取り出す時点で捨てて「無い」扱いにする
+async function idbGetFile(key: string): Promise<File | null> {
+  const v = await idbGet<unknown>(key)
+  if (v instanceof Blob) return v as File
+  if (v != null) await idbSet(key, null)
+  return null
+}
+
+export const loadBgm = () => idbGetFile('bgm')
 export const saveBgm = (f: File | null) => idbSet('bgm', f)
 
 // 試合動画。key は sourceKey（ファイル名+サイズ）と揃える
 const videoKey = (key: string) => `video:${key}`
-export const loadSourceVideo = (key: string) => idbGet<File>(videoKey(key))
+export const loadSourceVideo = (key: string) => idbGetFile(videoKey(key))
 export const saveSourceVideo = (key: string, f: File) => idbSet(videoKey(key), f)
 export const deleteSourceVideo = (key: string) => idbSet(videoKey(key), null)
 
 // 振り返りメモの瞬間だけ切り出した短い動画。試合動画（数GB・新しい試合で消える）と別に、
 // 振り返りメモと同じくずっと残す。見比べ・成長ムービーの素材になる
 const clipKey = (noteId: string) => `growthclip:${noteId}`
-export const loadGrowthClip = (noteId: string) => idbGet<File>(clipKey(noteId))
+export const loadGrowthClip = (noteId: string) => idbGetFile(clipKey(noteId))
 export const saveGrowthClip = (noteId: string, f: File) => idbSet(clipKey(noteId), f)
 export const deleteGrowthClip = (noteId: string) => idbSet(clipKey(noteId), null)
 
 // 本人の一言コメント動画（書き出し時に末尾へ挿入）
-export const loadComment = () => idbGet<File>('comment')
+export const loadComment = () => idbGetFile('comment')
 export const saveComment = (f: File | null) => idbSet('comment', f)
