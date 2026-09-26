@@ -70,6 +70,7 @@ export async function extractGrowthClip(noteId: string, sourceFile: File, atTime
     }
     await output.start()
 
+    if (!(await vTrack.canDecode())) throw new Error(`この端末のブラウザでは、この動画の形式（${vTrack.codec === 'hevc' ? 'HEVC（高効率）' : String(vTrack.codec ?? '不明')}）を読み込めません。iOSを最新にするか、iPhoneの「設定」→「カメラ」→「フォーマット」を「互換性優先」にして撮った動画でお試しください`)
     const sink = new CanvasSink(vTrack, { width: CLIP_W, height: CLIP_H, fit: 'cover', poolSize: 2 })
     const n = Math.round((end - start) * CLIP_FPS)
     const times = Array.from({ length: n }, (_, i) => start + i / CLIP_FPS)

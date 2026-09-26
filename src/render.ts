@@ -591,13 +591,17 @@ export async function exportHighlight({ project, files, bgm, comment, onProgress
     for (const scene of scenes) {
       const vTrack = await getInput(scene.sourceKey).getPrimaryVideoTrack()
       if (!vTrack) throw new Error('映像トラックがありません')
+      if (!(await vTrack.canDecode())) throw new Error(`この端末のブラウザでは、この動画の形式（${vTrack.codec === 'hevc' ? 'HEVC（高効率）' : String(vTrack.codec ?? '不明')}）を読み込めません。iOSを最新にするか、iPhoneの「設定」→「カメラ」→「フォーマット」を「互換性優先」にして撮った動画でお試しください`)
+      // 4K（iPhoneの標準設定）はそのままだとメモリを多く使うので、ズームしても荒れにくい 2560px までに縮めて取り出す
+      const dw = await vTrack.getDisplayWidth()
+      const dh = await vTrack.getDisplayHeight()
+      const k0 = Math.min(1, 2560 / Math.max(dw, dh))
+      const w = Math.round(dw * k0), h = Math.round(dh * k0)
       let sink = sinks.get(scene.sourceKey)
       if (!sink) {
-        sink = new CanvasSink(vTrack, { poolSize: 2 })
+        sink = new CanvasSink(vTrack, { poolSize: 2, width: w, height: h, fit: 'fill' })
         sinks.set(scene.sourceKey, sink)
       }
-      const w = await vTrack.getDisplayWidth()
-      const h = await vTrack.getDisplayHeight()
       const dur = sceneOutDuration(scene)
       const n = Math.round(dur * FPS)
       const times = Array.from({ length: n }, (_, k) => srcTimeAt(scene, k / FPS))
@@ -610,6 +614,8 @@ export async function exportHighlight({ project, files, bgm, comment, onProgress
       }
     }
     if (commentInfo) {
+      const vTrack = commentInfo.vTrack
+      if (!(await vTrack.canDecode())) throw new Error(`本人コメントの動画：この端末のブラウザでは、この動画の形式（${vTrack.codec === 'hevc' ? 'HEVC（高効率）' : String(vTrack.codec ?? '不明')}）を読み込めません。iOSを最新にするか、iPhoneの「設定」→「カメラ」→「フォーマット」を「互換性優先」にして撮った動画でお試しください`)
       const sink = new CanvasSink(commentInfo.vTrack, { width: OUT_W, height: OUT_H, fit: 'cover', poolSize: 2 })
       const n = Math.round(commentInfo.dur * FPS)
       const times = Array.from({ length: n }, (_, k) => k / FPS)
