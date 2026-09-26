@@ -10,6 +10,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#0a0616;font-family:'Noto Sans JP',sans-serif;color:#f2e8ff;max-width:480px;margin:0 auto;}
+/* 日本語を単語の途中で折らない（改行は助詞・読点の後ろだけ。印は下のスクリプトで付ける） */
+body{word-break:keep-all;overflow-wrap:anywhere;line-break:strict;}
 .sec{padding:48px 20px;border-bottom:1px solid rgba(255,255,255,0.05);}
 .lbl{font-size:9px;font-weight:700;letter-spacing:3px;color:#e13bff;text-transform:uppercase;margin-bottom:4px;}
 .sech{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;margin-bottom:20px;}
@@ -52,7 +54,7 @@ body{background:#0a0616;font-family:'Noto Sans JP',sans-serif;color:#f2e8ff;max-
 <div class="hero">
   <div class="hero-tag"><span class="live"></span>少年サッカー向け 無料Webアプリ</div>
   <div class="hero-h1">MATCHCUT<em>+</em></div>
-  <p class="hero-desc">MATCHCUTに、<strong>AIによる名場面検出と振り返り機能</strong>をプラス。<br>成長の記録も1つのアプリで。</p>
+  <p class="hero-desc">MATCHCUTに、<br><strong>AIが見せ場を探す機能と振り返りの記録</strong>をプラス。<br>成長の記録も、1つのアプリで。</p>
   <a href="https://satoshiatr-blip.github.io/matchcut-ai/" target="_blank" style="text-decoration:none;display:block;">
     <div class="cta-box">
       <div class="cta-box-l">インストール不要・完全無料</div>
@@ -61,8 +63,8 @@ body{background:#0a0616;font-family:'Noto Sans JP',sans-serif;color:#f2e8ff;max-
     </div>
   </a>
   <div class="stats">
-    <div class="stat"><div class="stat-n">AI</div><div class="stat-l">歓声検出</div></div>
-    <div class="stat"><div class="stat-n">5</div><div class="stat-l">タブ数</div></div>
+    <div class="stat"><div class="stat-n">AI</div><div class="stat-l">見せ場を提案</div></div>
+    <div class="stat"><div class="stat-n">記録</div><div class="stat-l">振り返り</div></div>
     <div class="stat"><div class="stat-n">0円</div><div class="stat-l">完全無料</div></div>
     <div class="stat"><div class="stat-n">不要</div><div class="stat-l">インストール</div></div>
   </div>
@@ -74,23 +76,23 @@ body{background:#0a0616;font-family:'Noto Sans JP',sans-serif;color:#f2e8ff;max-
   <div class="steps">
     <div class="step">
       <div class="sn">1</div>
-      <div><div class="st">🎥 試合動画を選ぶ</div><div class="sd">MATCHCUTと同じ編集機能はすべて使えます</div></div>
-      <div class="stag">動画を選ぶ</div>
+      <div><div class="st">🎥 動画を選ぶ</div><div class="sd">MATCHCUTの編集機能はすべて使えます</div></div>
+      <div class="stag">マーク</div>
     </div>
     <div class="step">
       <div class="sn">2</div>
-      <div><div class="st">✨ AI候補を確認</div><div class="sd">歓声が盛り上がった瞬間を自動で提示</div></div>
-      <div class="stag">AI検出</div>
+      <div><div class="st">✨ AIの候補を確認</div><div class="sd">歓声が大きい瞬間を候補に出します</div></div>
+      <div class="stag">マーク</div>
     </div>
     <div class="step">
       <div class="sn">3</div>
-      <div><div class="st">📝 振り返りを記録</div><div class="sd">見返しながら「できた」「次に試す」をメモ</div></div>
+      <div><div class="st">📝 振り返りを記録</div><div class="sd">「できた」「次に試す」をメモ</div></div>
       <div class="stag">振り返り</div>
     </div>
     <div class="step">
       <div class="sn">4</div>
-      <div><div class="st">🎬 成長ムービーを作る</div><div class="sd">記録した瞬間をつなげて1本の動画に</div></div>
-      <div class="stag">成長ムービー</div>
+      <div><div class="st">🎬 成長の動画を作る</div><div class="sd">記録した場面をつないで1本に</div></div>
+      <div class="stag">振り返り</div>
     </div>
   </div>
 </div>
@@ -101,23 +103,23 @@ body{background:#0a0616;font-family:'Noto Sans JP',sans-serif;color:#f2e8ff;max-
   <div class="feats">
     <div class="feat">
       <div class="fi">✨</div>
-      <div><div class="ft">AI歓声ピーク検出</div><div class="fd">動画の音声を解析し、盛り上がった瞬間を自動で提示（確定は必ず本人が行う）</div></div>
+      <div><div class="ft">歓声から見せ場を提案</div><div class="fd">歓声が大きくなった瞬間をAIが探して候補にします。使うかどうかは自分で決められます</div></div>
     </div>
     <div class="feat">
       <div class="fi">🙈</div>
-      <div><div class="ft">選手名を非表示</div><div class="fd">テロップの名前・背番号を隠して広く共有できる</div></div>
+      <div><div class="ft">名前を隠して共有</div><div class="fd">名前と背番号を隠して、安心して共有できます</div></div>
     </div>
     <div class="feat">
       <div class="fi">📝</div>
-      <div><div class="ft">振り返りメモ</div><div class="fd">「できた」「次に試す」をテーマ別・時系列で記録、比較できる</div></div>
+      <div><div class="ft">振り返りメモ</div><div class="fd">「できた」「次に試す」を記録。テーマ別・日付順に見返せます</div></div>
     </div>
     <div class="feat">
       <div class="fi">🎬</div>
-      <div><div class="ft">瞬間クリップの書き出し</div><div class="fd">記録したその場面だけを短い動画として保存・共有できる</div></div>
+      <div><div class="ft">その場面だけ保存</div><div class="fd">メモした場面だけを、短い動画で保存・共有できます</div></div>
     </div>
     <div class="feat">
       <div class="fi">🎤</div>
-      <div><div class="ft">本人コメント挿入</div><div class="fd">完成動画の最後に、選手本人が話す一言クリップを追加</div></div>
+      <div><div class="ft">本人のひと言</div><div class="fd">完成した動画の最後に、選手本人のひと言を入れられます</div></div>
     </div>
   </div>
 </div>
@@ -141,5 +143,13 @@ body{background:#0a0616;font-family:'Noto Sans JP',sans-serif;color:#f2e8ff;max-
   </div>
 </div>
 
+<script>
+// 助詞・読点の後ろに改行できる印（ゼロ幅スペース）を入れる。続く文字がひらがなのとき（「できます」の「で」など）と「その」「この」の後ろには入れない
+(function(){
+  var re=/((?:[はがをにでともへや、。」）]|(?<![そこあど])の))(?=[^ぁ-ゟ、。」）！？!?\s])/g;
+  var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n;
+  while((n=w.nextNode())){ if(/[぀-鿿]/.test(n.data)) n.data=n.data.replace(re,'$1​'); }
+})();
+</script>
 </body>
 </html>
