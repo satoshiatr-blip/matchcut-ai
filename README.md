@@ -1,7 +1,7 @@
-# MATCHCUT AI
+# MATCHCUT+
 
 保護者がiPhoneで撮った試合動画を、プロの試合のハイライト風に編集するPWA。
-[MATCHCUT](https://github.com/satoshiatr-blip/matchcut) の全機能に加えて、AIによる見せ場候補の提案と選手名の非表示に対応。
+[MATCHCUT](https://github.com/satoshiatr-blip/matchcut) の全機能に加えて、見せ場候補の自動提案（試合音の盛り上がりから検出）と選手名の非表示に対応。
 動画の読み込み・解析・編集・書き出しはすべて端末内で行い、外部へは送信しない。
 
 - 使う: https://satoshiatr-blip.github.io/matchcut-ai/ （Safariで開き「ホーム画面に追加」）
