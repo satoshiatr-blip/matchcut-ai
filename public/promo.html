@@ -47,6 +47,11 @@ body{word-break:keep-all;overflow-wrap:anywhere;line-break:strict;}
 .cta-s{font-size:12px;color:rgba(242,232,255,0.4);margin-bottom:24px;letter-spacing:1px;}
 .chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
 .chip{font-size:10px;font-weight:700;letter-spacing:0.5px;padding:5px 11px;border-radius:100px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);color:rgba(242,232,255,0.4);}
+.vbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;padding:14px;border-radius:14px;border:1px solid rgba(225,59,255,0.45);background:rgba(225,59,255,0.08);color:#e13bff;font-family:inherit;font-weight:900;font-size:14px;letter-spacing:1px;cursor:pointer;}
+.vmodal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.88);padding:16px;}
+.vmodal.open{display:flex;}
+.vmodal video{max-width:100%;max-height:calc(100vh - 80px);border-radius:14px;background:#000;}
+.vclose{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-size:20px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -62,6 +67,11 @@ body{word-break:keep-all;overflow-wrap:anywhere;line-break:strict;}
       <div class="cta-box-u">satoshiatr-blip.github.io/matchcut-ai/</div>
     </div>
   </a>
+  <button class="vbtn" type="button" onclick="openVideo()">&#9654; 動画を見る</button>
+  <div class="vmodal" id="vmodal" onclick="if(event.target===this)closeVideo()">
+    <button class="vclose" type="button" aria-label="閉じる" onclick="closeVideo()">&#10005;</button>
+    <video id="vplayer" src="promo-reel.mp4" controls playsinline preload="none"></video>
+  </div>
   <div class="stats">
     <div class="stat"><div class="stat-n">自動</div><div class="stat-l">見せ場の提案</div></div>
     <div class="stat"><div class="stat-n">記録</div><div class="stat-l">振り返り</div></div>
@@ -150,6 +160,11 @@ body{word-break:keep-all;overflow-wrap:anywhere;line-break:strict;}
   var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n;
   while((n=w.nextNode())){ if(/[぀-鿿]/.test(n.data)) n.data=n.data.replace(re,'$1​'); }
 })();
+</script>
+<script>
+function openVideo(){var m=document.getElementById('vmodal'),v=document.getElementById('vplayer');m.classList.add('open');v.currentTime=0;v.play().catch(function(){});}
+function closeVideo(){var m=document.getElementById('vmodal'),v=document.getElementById('vplayer');v.pause();m.classList.remove('open');}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeVideo();});
 </script>
 </body>
 </html>
